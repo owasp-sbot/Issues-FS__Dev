@@ -1,0 +1,3 @@
+[submodule "modules/Issues-FS"]
+	path = modules/Issues-FS
+	url = git@github.com:owasp-sbot/Issues-FS.git
