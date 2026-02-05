@@ -10,3 +10,6 @@
 [submodule "modules/Issues-FS__Service__UI"]
 	path = modules/Issues-FS__Service__UI
 	url = git@github.com:owasp-sbot/Issues-FS__Service__UI.git
+[submodule "modules/Issues-FS__Docs"]
+	path = modules/Issues-FS__Docs
+	url = git@github.com:owasp-sbot/Issues-FS__Docs.git
