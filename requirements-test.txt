@@ -1,0 +1,8 @@
+osbot-utils
+#issues-fs
+#issues-fs-service
+#issues-fs-service-client-python
+
+# for testing
+pytest
+pytest-cov

@@ -1,0 +1,20 @@
+[tool.poetry]
+name        = "issues_fs_dev"
+version     = "v0.4.1"
+description = "Issues-FS Dev - Development workspace and integration tests"
+authors     = ["Dinis Cruz <dinis.cruz@owasp.org>"]
+license     = "Apache 2.0"
+readme      = "README.md"
+homepage    = "https://github.com/owasp-sbot/Issues-FS__Dev"
+repository  = "https://github.com/owasp-sbot/Issues-FS__Dev"
+
+[tool.poetry.dependencies]
+python                   = "^3.12"
+osbot-utils              = "*"
+#issues-fs                = "*"
+#issues-fs-service        = "*"
+#issues-fs-service-client-python = "*"
+
+[build-system]
+requires = ["poetry-core>=1.9.1"]
+build-backend = "poetry.core.masonry.api"
