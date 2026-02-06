@@ -25,3 +25,12 @@
 	path = roles/Issues-FS__Dev__Role__Librarian
 	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Librarian.git
 	branch = dev
+[submodule "roles/Issues-FS__Dev__Role__Dev"]
+	path = roles/Issues-FS__Dev__Role__Dev
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Dev
+[submodule "roles/Issues-FS__Dev__Role__Conductor"]
+	path = roles/Issues-FS__Dev__Role__Conductor
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Conductor
+[submodule "roles/Issues-FS__Dev__Role__Architect"]
+	path = roles/Issues-FS__Dev__Role__Architect
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Architect
