@@ -17,3 +17,7 @@
 	path = modules/Issues-FS__CLI
 	url = git@github.com:owasp-sbot/Issues-FS__CLI.git
 	branch = dev
+[submodule "roles/Issues-FS__Dev__Role__DevOps"]
+	path = roles/Issues-FS__Dev__Role__DevOps
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__DevOps.git
+	branch = dev
