@@ -13,3 +13,7 @@
 [submodule "modules/Issues-FS__Docs"]
 	path = modules/Issues-FS__Docs
 	url = git@github.com:owasp-sbot/Issues-FS__Docs.git
+[submodule "modules/Issues-FS__CLI"]
+	path = modules/Issues-FS__CLI
+	url = git@github.com:owasp-sbot/Issues-FS__CLI.git
+	branch = dev
