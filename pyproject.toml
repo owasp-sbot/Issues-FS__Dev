@@ -11,7 +11,7 @@ repository  = "https://github.com/owasp-sbot/Issues-FS__Dev"
 [tool.poetry.dependencies]
 python                   = "^3.12"
 osbot-utils              = "*"
-#issues-fs                = "*"
+issues-fs-cli            = "*"
 #issues-fs-service        = "*"
 #issues-fs-service-client-python = "*"
 

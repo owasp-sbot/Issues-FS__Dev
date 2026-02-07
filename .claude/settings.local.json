@@ -5,6 +5,9 @@
       "Bash(git checkout:*)",
       "Bash(git pull:*)",
       "Bash(git add:*)",
+      "Bash(for d in *)",
+      "Bash($ISSUES_FS:*)",
+      "Bash(/Users/diniscruz/Library/Caches/pypoetry/virtualenvs/issues-fs-dev-1uzJze9o-py3.12/bin/issues-fs:*)"
     ]
   }
 }
