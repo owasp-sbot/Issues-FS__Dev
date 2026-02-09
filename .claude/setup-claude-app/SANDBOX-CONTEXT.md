@@ -8,23 +8,23 @@
 
 ## What Is This?
 
-Claude.app has been launched inside a **macOS sandbox profile** (`sandbox-exec`) that restricts your filesystem access to a tightly scoped set of directories. This is an intentional security measure applied at the OS level.
+Claude.app has been launched inside a **macOS sandbox profile** (`sandbox-exec`) that uses a **deny-list** to block access to sensitive paths. Most system operations work normally, but specific directories containing credentials, personal files, and secrets are blocked at the kernel level.
 
 This means:
 
-- You **cannot** access most of the developer's home directory (`/Users/diniscruz`).
-- You **can only** read/write to explicitly allowed project directories.
-- You **can only** read (not write) explicitly allowed read-only directories (e.g., virtual environments).
-- Attempts to access anything outside the allowed paths will fail with `Operation not permitted` or `Permission denied`.
-- Network access is allowed (required for Claude API), but filesystem access is locked down.
+- You **can** access your project directory and most system paths normally.
+- You **cannot** access explicitly blocked sensitive paths (SSH keys, personal folders, credentials, shell history).
+- Attempts to access blocked paths will fail with `Operation not permitted`.
+- Network access is allowed (required for Claude API).
+- All executables on the system PATH are available.
 
-**This is by design. Do not attempt to work around these restrictions.**
+**The blocked paths are blocked by design. Do not attempt to work around these restrictions.**
 
 ---
 
 ## How the Sandbox Works
 
-The sandbox uses macOS's `sandbox-exec` with a custom profile (`claude-sandbox.sb`). Unlike a separate user account, this runs as the same macOS user but with **kernel-enforced file access restrictions**. The kernel itself blocks disallowed operations — no userspace workaround is possible.
+The sandbox uses macOS's `sandbox-exec` with a custom profile (`claude-sandbox.sb`). It runs as the same macOS user but with **kernel-enforced deny rules** on specific paths. The approach is: allow everything by default, then explicitly deny access to sensitive directories. The kernel blocks denied operations — no userspace workaround is possible.
 
 The sandbox profile is at: `.claude/setup-exec-environment/claude-sandbox.sb`
 
@@ -32,36 +32,29 @@ The sandbox profile is at: `.claude/setup-exec-environment/claude-sandbox.sb`
 
 ## Your Access Map
 
-### Read/Write Access (you can read, create, modify, and delete files here)
+### Full Access (everything works normally)
 
 | Directory | Purpose |
 |-----------|---------|
-| `/Users/diniscruz/_dev/owasp-sbot/Issues-FS__Dev` | Main project workspace |
+| `/Users/diniscruz/_dev/owasp-sbot/Issues-FS__Dev` | Main project workspace (R/W) |
+| `/Users/diniscruz/Library/Caches/pypoetry/virtualenvs/...` | Python virtual environment |
+| `/usr/bin`, `/bin`, `/usr/local/bin`, `/opt/homebrew/bin` | System executables |
+| All other non-blocked system paths | Normal macOS operation |
 
-### Read-Only Access (you can read and execute, but NOT write)
+### Blocked Paths (will fail with "Operation not permitted")
 
-| Directory | Purpose |
-|-----------|---------|
-| `/Users/diniscruz/Library/Caches/pypoetry/virtualenvs/issues-fs-dev-1uzJze9o-py3.12` | Python virtual environment |
-
-### Allowed Executable Paths (read + execute)
-
-| Path | Contents |
-|------|----------|
-| `/usr/bin`, `/bin` | System utilities (ls, find, grep, sed, etc.) |
-| `/usr/local/bin` | Homebrew-installed tools |
-| `/opt/homebrew/bin`, `/opt/homebrew/Cellar` | Apple Silicon Homebrew |
-
-### No Access (will fail with "Operation not permitted")
-
-Everything else, including but not limited to:
-
-- `/Users/diniscruz/.ssh/` — SSH keys
-- `/Users/diniscruz/.zsh_history` — shell history
-- `/Users/diniscruz/Desktop/`, `Documents/`, `Downloads/`
-- `/Users/diniscruz/.env`, `.npmrc`, `.gitconfig` — credentials and configs
-- Any other project directories under `/Users/diniscruz/_dev/` not listed above
-- `/Users/diniscruz/.zshrc`, `.bash_profile` — shell configs
+| Path | Why blocked |
+|------|-------------|
+| `~/.ssh/` | SSH keys and credentials |
+| `~/.aws/credentials`, `~/.aws/config` | AWS credentials |
+| `~/.gnupg/` | GPG keys |
+| `~/.zsh_history`, `~/.bash_history` | Shell history (may contain secrets) |
+| `~/.node_repl_history`, `~/.python_history` | REPL history |
+| `~/Desktop/`, `~/Documents/`, `~/Downloads/` | Personal files |
+| `~/Pictures/`, `~/Movies/`, `~/Music/` | Personal media |
+| `~/.env`, `~/.npmrc`, `~/.pypirc`, `~/.netrc` | Secret environment/credential files |
+| `~/.docker/config.json` | Docker credentials |
+| `~/Library/Keychains/` | macOS keychain database |
 
 ---
 
@@ -69,35 +62,24 @@ Everything else, including but not limited to:
 
 When you encounter an error, follow this decision tree:
 
-### 1. "Operation not permitted" or "Permission denied" when reading a path
+### 1. "Operation not permitted" when reading a path
 
-**Likely cause:** The path is outside the sandbox profile's allowed list.
+**Likely cause:** The path is on the sandbox deny list.
 
-**Check:** Is the path under one of the R/W or R/O directories listed above?
+**Check:** Is the path one of the blocked paths listed above (e.g., `~/.ssh`, `~/Desktop`, `~/.env`)?
 
-- **No** → This is expected. The sandbox blocks it. Tell the user:
-  _"This path is outside the sandbox. I only have access to [list allowed dirs]. To grant access, add the path to `claude-sandbox.sb` in `.claude/setup-exec-environment/` and relaunch Claude.app with the sandbox script."_
+- **Yes** → This is expected and by design. The sandbox blocks these sensitive paths. Tell the user:
+  _"This path is blocked by the sandbox profile for security. If you need me to access it, remove the corresponding `(deny ...)` entry from `claude-sandbox.sb` in `.claude/setup-exec-environment/` and relaunch Claude.app."_
 
-- **Yes** → The sandbox profile may need adjustment. The path might be a symlink that resolves outside the allowed tree, or a new subdirectory not covered. Tell the user:
-  _"This should be accessible but isn't. Check if the path involves symlinks that resolve outside the sandbox. You may need to add the resolved path to `claude-sandbox.sb`."_
+- **No** → This is unexpected. The deny-list sandbox allows everything not explicitly blocked. Check if the path is a symlink that resolves into a blocked directory. Tell the user to run `log stream --predicate 'process == "Claude" AND messageType == 16'` to see the exact denial.
 
 ### 2. "Operation not permitted" when writing/creating a file
 
-**Likely cause:** The target path is in a read-only area, or outside the sandbox entirely.
+**Likely cause:** The target path is in a blocked directory.
 
-- **In R/O directory** → By design. If writing is needed (e.g., installing packages into the venv), tell the user to change the path from `file-read*` to `file-read* file-write*` in `claude-sandbox.sb`.
-- **In R/W directory** → Check for symlinks resolving outside the allowed tree.
-- **Outside all allowed paths** → The sandbox is working correctly. Tell the user what path to add.
-
-### 3. "Operation not permitted" on a command (not a file)
-
-**Likely cause:** The executable is in a directory not allowed in the sandbox profile.
-
-Common cases:
-- **Homebrew on Intel Mac:** Tools might be in `/usr/local/bin` (should be allowed by default).
-- **Homebrew on Apple Silicon:** Tools in `/opt/homebrew/bin` (should be allowed by default).
-- **nvm-installed Node:** Might be in `~/.nvm/versions/...` which is NOT allowed by default. Tell the user to uncomment the nvm line in `claude-sandbox.sb`.
-- **pyenv Python:** Might be in `~/.pyenv/versions/...` which is NOT allowed. User needs to add it.
+- **In a blocked dir** (e.g., `~/Desktop`, `~/Documents`) → By design. Tell the user which deny rule is blocking it.
+- **In the project dir** → This should not happen with the deny-list approach. Check for symlinks resolving into blocked paths.
+- **Anywhere else** → Most paths should be writable. Check the sandbox log for the specific denial reason.
 
 ### 4. Git push/pull authentication failures
 
@@ -116,18 +98,17 @@ Common cases:
 2. If that fails with "Operation not permitted", the venv path needs to be added to the sandbox profile.
 3. Use the full venv python path: `/Users/diniscruz/Library/Caches/pypoetry/virtualenvs/issues-fs-dev-1uzJze9o-py3.12/bin/python -m pytest`
 
-### 6. Claude.app itself crashes or fails to start
+### 6. Claude.app behaves unexpectedly
 
-**Likely cause:** The sandbox profile is too restrictive for the Electron app's needs.
+**Likely cause:** A deny rule is blocking a path the app legitimately needs.
 
-The profile needs to allow access to:
-- `~/Library/Caches/Claude` and `~/Library/Application Support/Claude` (R/W)
-- `~/Library/Preferences` (R/O)
-- `/private/tmp` and `/private/var/folders` (R/W for temp files)
+**How to debug:** Run this in a separate terminal before launching Claude.app sandboxed:
 
-If Claude.app won't start, check the system console (`Console.app`) for `sandbox` violation messages. These will tell you exactly which path was denied.
+```bash
+log stream --predicate 'process == "Claude" AND messageType == 16'
+```
 
-**How to debug:** Run `log stream --predicate 'process == "Claude" AND messageType == 16'` in a separate terminal to see sandbox violations in real time.
+This shows sandbox violations in real time. If the app misbehaves, the log will show exactly which path was denied, so you can adjust the sandbox profile.
 
 ---
 
@@ -168,9 +149,9 @@ All sandbox configuration lives in:
 
 When directing the user to fix configuration, always reference the specific file:
 
-- **Add a project directory:** "Add a `(allow file-read* file-write* (subpath \"/path/to/dir\"))` entry to `claude-sandbox.sb` in `.claude/setup-exec-environment/`, then relaunch Claude.app with `./run-claude-sandboxed.sh`"
-- **Add read-only access:** "Add a `(allow file-read* (subpath \"/path/to/dir\"))` entry to `claude-sandbox.sb`"
-- **Allow an executable path:** "Add a `(allow file-read* process-exec (subpath \"/path/to/bin\"))` entry to `claude-sandbox.sb`"
+- **Unblock a path:** "Remove or comment out the corresponding `(deny ...)` entry in `claude-sandbox.sb` in `.claude/setup-exec-environment/`, then relaunch Claude.app with `./run-claude-sandboxed.sh`"
+- **Block a new path:** "Add a `(deny file-read* file-write* (subpath \"/path/to/block\"))` entry to `claude-sandbox.sb`"
+- **Block a sibling project:** "Add `(deny file-read* file-write* (subpath \"/Users/diniscruz/_dev/other-project\"))` to `claude-sandbox.sb`"
 - **Debug sandbox failures:** "Run `log stream --predicate 'process == \"Claude\" AND messageType == 16'` to see which paths are being denied"
 
 ---
@@ -196,4 +177,4 @@ cat /Users/diniscruz/.ssh/id_rsa
 cat /Users/diniscruz/.zsh_history
 ```
 
-If the "should fail" commands succeed, the sandbox is not active — Claude.app may not have been launched via `run-claude-sandboxed.sh`.
+If the "should fail" commands succeed, the sandbox is not active — Claude.app may not have been launched via `run-claude-sandboxed.sh`. Note that with the deny-list approach, most paths work normally; only the specifically blocked paths should fail.

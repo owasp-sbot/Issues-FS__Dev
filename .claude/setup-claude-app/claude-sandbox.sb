@@ -1,123 +1,100 @@
 ;; =============================================================================
 ;; claude-sandbox.sb — macOS Sandbox Profile for Claude.app
 ;; =============================================================================
-;; Restricts Claude.app's filesystem access to explicitly listed directories.
-;; This uses macOS's built-in sandbox-exec mechanism.
+;; Strategy: ALLOW by default, DENY access to sensitive paths.
+;;
+;; A deny-default profile is impractical for Electron apps (Chromium touches
+;; hundreds of system paths at startup). Instead, we allow normal operation
+;; but explicitly block access to directories that Claude should never touch.
 ;;
 ;; Usage:
-;;   sandbox-exec -f claude-sandbox.sb /Applications/Claude.app/Contents/MacOS/Claude
+;;   sandbox-exec -f claude-sandbox.sb -D HOME=/Users/diniscruz \
+;;     /Applications/Claude.app/Contents/MacOS/Claude
 ;; =============================================================================
 
 (version 1)
 
-;; Start with deny-all, then allow specific things
-(deny default)
-
-;; ---- Allow basic process operations ----------------------------------------
-(allow process-exec)
-(allow process-fork)
-(allow signal)
-(allow sysctl-read)
-(allow mach-lookup)
-(allow mach-register)
-(allow ipc-posix-shm-read-data)
-(allow ipc-posix-shm-write-data)
-(allow ipc-posix-shm-read-metadata)
-(allow ipc-posix-shm-write-create)
-(allow ipc-posix-shm-write-unlink)
-
-;; ---- Allow GUI operations (WindowServer, CoreGraphics, etc.) ---------------
-(allow iokit-open)
-(allow iokit-get-properties)
-(allow user-preference-read)
-(allow file-read-metadata)
-
-;; ---- System libraries and frameworks (read-only) ---------------------------
-(allow file-read*
-    (subpath "/System")
-    (subpath "/Library")
-    (subpath "/usr/lib")
-    (subpath "/usr/share")
-    (subpath "/private/var/db")
-    (subpath "/dev")
-    (subpath "/Applications/Claude.app")
-    (subpath "/bin")
-    (subpath "/usr/bin")
-    (subpath "/sbin")
-    (subpath "/usr/sbin")
-)
-
-;; ---- Allow Claude.app to function (Electron needs these) -------------------
-;; User-level Library (fonts, preferences, caches for the app itself)
-(allow file-read*
-    (subpath (string-append (param "HOME") "/Library/Preferences"))
-    (subpath (string-append (param "HOME") "/Library/Caches/Claude"))
-    (subpath (string-append (param "HOME") "/Library/Application Support/Claude"))
-    (subpath (string-append (param "HOME") "/Library/Saved Application State/com.anthropic.claudefordesktop.savedState"))
-)
-
-(allow file-write*
-    (subpath (string-append (param "HOME") "/Library/Caches/Claude"))
-    (subpath (string-append (param "HOME") "/Library/Application Support/Claude"))
-    (subpath (string-append (param "HOME") "/Library/Saved Application State/com.anthropic.claudefordesktop.savedState"))
-    (subpath (string-append (param "HOME") "/Library/Logs/Claude"))
-)
-
-;; Temp directories
-(allow file-read* file-write*
-    (subpath "/private/tmp")
-    (subpath "/private/var/folders")
-    (subpath (string-append (param "HOME") "/Library/Caches/com.anthropic.claudefordesktop"))
-)
-
-;; ---- NETWORK (required for Claude API communication) -----------------------
-(allow network-outbound)
-(allow network-inbound (local ip))
-(allow system-socket)
+;; Start permissive — Electron/Chromium needs broad system access to function
+(allow default)
 
 ;; =============================================================================
-;; PROJECT ACCESS — EDIT THESE TO MATCH YOUR SETUP
+;; DENY LIST — paths Claude.app must NOT access
 ;; =============================================================================
 
-;; ---- Read/Write: Project directories ---------------------------------------
-(allow file-read* file-write*
-    (subpath "/Users/diniscruz/_dev/owasp-sbot/Issues-FS__Dev")
+;; ---- SSH keys and credentials ----------------------------------------------
+(deny file-read* file-write*
+    (subpath (string-append (param "HOME") "/.ssh"))
+    (literal (string-append (param "HOME") "/.aws/credentials"))
+    (literal (string-append (param "HOME") "/.aws/config"))
+    (subpath (string-append (param "HOME") "/.gnupg"))
 )
 
-;; ---- Read-Only: Virtual environments, SDKs, tools -------------------------
-(allow file-read*
-    (subpath "/Users/diniscruz/Library/Caches/pypoetry/virtualenvs/issues-fs-dev-1uzJze9o-py3.12")
+;; ---- Shell history and configs (credential leakage) ------------------------
+(deny file-read*
+    (literal (string-append (param "HOME") "/.zsh_history"))
+    (literal (string-append (param "HOME") "/.bash_history"))
+    (literal (string-append (param "HOME") "/.node_repl_history"))
+    (literal (string-append (param "HOME") "/.python_history"))
 )
 
-;; ---- Executables that Claude Code spawns -----------------------------------
-;; Allow executing specific tools (read + execute)
-(allow file-read* process-exec
-    (subpath "/usr/bin")
-    (subpath "/usr/local/bin")
-    (subpath "/bin")
-    (subpath "/opt/homebrew/bin")
-    (subpath "/opt/homebrew/Cellar")
+;; ---- Personal directories --------------------------------------------------
+(deny file-read* file-write*
+    (subpath (string-append (param "HOME") "/Desktop"))
+    (subpath (string-append (param "HOME") "/Documents"))
+    (subpath (string-append (param "HOME") "/Downloads"))
+    (subpath (string-append (param "HOME") "/Pictures"))
+    (subpath (string-append (param "HOME") "/Movies"))
+    (subpath (string-append (param "HOME") "/Music"))
 )
 
-;; Allow executing the venv python
-(allow process-exec
-    (subpath "/Users/diniscruz/Library/Caches/pypoetry/virtualenvs/issues-fs-dev-1uzJze9o-py3.12")
+;; ---- Other dev projects (prevent lateral movement) -------------------------
+;; Block the entire _dev tree, then carve out the allowed project below.
+;; NOTE: Order matters in sandbox profiles — later rules override earlier ones.
+;; Unfortunately macOS sandbox does NOT support deny-then-allow overrides.
+;; So instead we deny specific sibling projects / parent dirs we want blocked.
+;;
+;; Option A: Block specific known sibling dirs (safer, more maintenance)
+;; Option B: Don't block _dev broadly, rely on the personal dirs block above
+;;
+;; Using Option B by default. Uncomment Option A entries if you have specific
+;; projects to block:
+;;
+;; (deny file-read* file-write*
+;;     (subpath (string-append (param "HOME") "/_dev/other-project"))
+;;     (subpath (string-append (param "HOME") "/_dev/secrets"))
+;; )
+
+;; ---- Environment files that may contain secrets ----------------------------
+(deny file-read*
+    (literal (string-append (param "HOME") "/.env"))
+    (literal (string-append (param "HOME") "/.npmrc"))
+    (literal (string-append (param "HOME") "/.pypirc"))
+    (literal (string-append (param "HOME") "/.netrc"))
+    (literal (string-append (param "HOME") "/.docker/config.json"))
 )
 
-;; ---- Node.js (required for Claude Code runtime) ----------------------------
-;; Uncomment and adjust for your Node.js installation:
-;; (allow file-read* process-exec (subpath "/Users/diniscruz/.nvm"))
-;; (allow file-read* process-exec (subpath "/usr/local/lib/node_modules"))
-;; (allow file-read* process-exec (subpath "/opt/homebrew/lib/node_modules"))
+;; ---- Keychains (macOS credential store) ------------------------------------
+(deny file-read* file-write*
+    (subpath (string-append (param "HOME") "/Library/Keychains"))
+)
 
 ;; =============================================================================
-;; EXPLICITLY DENIED — these are already denied by default, listed for clarity
+;; NOTES
 ;; =============================================================================
-;; /Users/diniscruz/.ssh              — SSH keys
-;; /Users/diniscruz/.zsh_history      — shell history
-;; /Users/diniscruz/Desktop           — personal files
-;; /Users/diniscruz/Documents         — personal files
-;; /Users/diniscruz/Downloads         — personal files
-;; /Users/diniscruz/.env              — environment credentials
-;; /Users/diniscruz/.gitconfig        — git credentials (global)
-;; Any other project directories      — lateral movement
+;; What IS allowed (by the default allow rule):
+;;   - /Users/diniscruz/_dev/owasp-sbot/Issues-FS__Dev  (R/W — your project)
+;;   - /Users/diniscruz/Library/Caches/pypoetry/...     (R/O effectively)
+;;   - All system paths, executables, frameworks
+;;   - Network access (required for Claude API)
+;;   - Claude.app's own support directories
+;;
+;; What is BLOCKED:
+;;   - ~/.ssh, ~/.gnupg, ~/.aws — credentials
+;;   - Shell histories — credential/secret leakage
+;;   - ~/Desktop, ~/Documents, ~/Downloads, etc. — personal files
+;;   - ~/.env, ~/.npmrc, ~/.netrc, etc. — secret env files
+;;   - ~/Library/Keychains — macOS keychain
+;;
+;; To add more blocked paths, add (deny file-read* file-write* ...) entries.
+;; To block a specific sibling project:
+;;   (deny file-read* file-write* (subpath "/Users/diniscruz/_dev/other-project"))

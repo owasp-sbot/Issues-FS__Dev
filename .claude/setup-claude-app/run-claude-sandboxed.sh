@@ -2,7 +2,7 @@
 # =============================================================================
 # run-claude-sandboxed.sh
 # Launches Claude.app inside a macOS sandbox profile that restricts filesystem
-# access to only the configured project directories.
+# access by denying sensitive paths.
 # =============================================================================
 # Usage:
 #   ./run-claude-sandboxed.sh                # launch with sandbox
@@ -21,24 +21,34 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+PASS=0
+FAIL=0
+
 info()  { echo -e "${CYAN}[INFO]${NC}  $1"; }
-ok()    { echo -e "${GREEN}[OK]${NC}    $1"; }
+ok()    { echo -e "${GREEN}[OK]${NC}    $1"; PASS=$((PASS + 1)); }
+fail()  { echo -e "${RED}[FAIL]${NC}  $1"; FAIL=$((FAIL + 1)); }
 warn()  { echo -e "${YELLOW}[WARN]${NC}  $1"; }
-error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+
+# Helper: run a command inside the sandbox, capturing exit code
+sandbox_run() {
+    sandbox-exec -f "$SANDBOX_PROFILE" -D "HOME=${HOME}" "$@" 2>/dev/null
+}
 
 # ---- Locate Claude.app -----------------------------------------------------
 CLAUDE_APP="${CC_CLAUDE_APP:-/Applications/Claude.app}"
 CLAUDE_BIN="${CLAUDE_APP}/Contents/MacOS/Claude"
 
 if [[ ! -x "$CLAUDE_BIN" ]]; then
-    error "Claude.app not found at ${CLAUDE_APP}. Set CC_CLAUDE_APP in config.env."
+    echo -e "${RED}[ERROR]${NC} Claude.app not found at ${CLAUDE_APP}. Set CC_CLAUDE_APP in config.env."
+    exit 1
 fi
 
 # ---- Locate sandbox profile -------------------------------------------------
 SANDBOX_PROFILE="${SCRIPT_DIR}/claude-sandbox.sb"
 
 if [[ ! -f "$SANDBOX_PROFILE" ]]; then
-    error "Sandbox profile not found at ${SANDBOX_PROFILE}"
+    echo -e "${RED}[ERROR]${NC} Sandbox profile not found at ${SANDBOX_PROFILE}"
+    exit 1
 fi
 
 # ---- Mode handling ----------------------------------------------------------
@@ -56,59 +66,153 @@ case "$MODE" in
         ;;
     --test)
         info "Testing sandbox restrictions..."
+        info "Profile: ${SANDBOX_PROFILE}"
+        info "HOME: ${HOME}"
         echo ""
 
-        # Test: can we read the project dir?
-        info "Reading project directory..."
-        if sandbox-exec -f "$SANDBOX_PROFILE" -D "HOME=${HOME}" \
-            /bin/ls "${CC_RW_DIRECTORIES%%,*}" &>/dev/null; then
-            ok "Can read project directory"
+        # ---- Tests that SHOULD SUCCEED (allowed paths) ----
+        info "=== Allowed Access (should succeed) ==="
+        echo ""
+
+        PROJECT_DIR="${CC_RW_DIRECTORIES%%,*}"
+
+        # Read project dir
+        if sandbox_run /bin/ls "$PROJECT_DIR" >/dev/null; then
+            ok "Can read project dir: ${PROJECT_DIR}"
         else
-            echo -e "  ${RED}✗ FAIL${NC}  Cannot read project directory"
+            fail "Cannot read project dir: ${PROJECT_DIR}"
         fi
 
-        # Test: can we read Desktop? (should fail)
-        info "Attempting to read ~/Desktop (should fail)..."
-        if sandbox-exec -f "$SANDBOX_PROFILE" -D "HOME=${HOME}" \
-            /bin/ls "${HOME}/Desktop" &>/dev/null; then
-            echo -e "  ${RED}✗ FAIL${NC}  CAN read ~/Desktop (sandbox not working!)"
+        # Write to project dir
+        TESTFILE="${PROJECT_DIR}/.sandbox-write-test-$$"
+        if sandbox_run /usr/bin/touch "$TESTFILE" && rm -f "$TESTFILE"; then
+            ok "Can write to project dir"
         else
-            ok "Cannot read ~/Desktop (sandbox is working)"
+            rm -f "$TESTFILE" 2>/dev/null
+            fail "Cannot write to project dir"
         fi
 
-        # Test: can we read .ssh? (should fail)
-        info "Attempting to read ~/.ssh (should fail)..."
-        if sandbox-exec -f "$SANDBOX_PROFILE" -D "HOME=${HOME}" \
-            /bin/ls "${HOME}/.ssh" &>/dev/null; then
-            echo -e "  ${RED}✗ FAIL${NC}  CAN read ~/.ssh (sandbox not working!)"
+        # Read system paths
+        if sandbox_run /bin/ls /usr/bin >/dev/null; then
+            ok "Can read /usr/bin"
         else
-            ok "Cannot read ~/.ssh (sandbox is working)"
+            fail "Cannot read /usr/bin"
         fi
 
-        # Test: can we write to project dir?
-        info "Writing to project directory..."
-        TESTFILE="${CC_RW_DIRECTORIES%%,*}/.sandbox-test-$$"
-        if sandbox-exec -f "$SANDBOX_PROFILE" -D "HOME=${HOME}" \
-            /usr/bin/touch "$TESTFILE" 2>/dev/null; then
-            rm -f "$TESTFILE"
-            ok "Can write to project directory"
+        # Execute basic commands
+        if sandbox_run /bin/echo "test" >/dev/null; then
+            ok "Can execute /bin/echo"
         else
-            echo -e "  ${RED}✗ FAIL${NC}  Cannot write to project directory"
+            fail "Cannot execute /bin/echo"
         fi
 
-        # Test: can we write to Desktop? (should fail)
-        info "Attempting to write to ~/Desktop (should fail)..."
-        if sandbox-exec -f "$SANDBOX_PROFILE" -D "HOME=${HOME}" \
-            /usr/bin/touch "${HOME}/Desktop/.sandbox-test-$$" 2>/dev/null; then
+        # Git in project
+        if sandbox_run /usr/bin/git -C "$PROJECT_DIR" status >/dev/null 2>&1; then
+            ok "Can run git status in project"
+        else
+            # git might not be at /usr/bin/git
+            GIT_PATH=$(which git 2>/dev/null || echo "/usr/bin/git")
+            if sandbox_run "$GIT_PATH" -C "$PROJECT_DIR" status >/dev/null 2>&1; then
+                ok "Can run git status in project (at ${GIT_PATH})"
+            else
+                warn "Cannot run git in project (git may need path adjustment)"
+            fi
+        fi
+
+        echo ""
+        info "=== Denied Access (should fail) ==="
+        echo ""
+
+        # ---- Tests that SHOULD FAIL (blocked paths) ----
+
+        # SSH keys
+        if sandbox_run /bin/ls "${HOME}/.ssh" >/dev/null 2>&1; then
+            fail "CAN read ~/.ssh (should be blocked!)"
+        else
+            ok "Cannot read ~/.ssh"
+        fi
+
+        # Shell history
+        if sandbox_run /bin/cat "${HOME}/.zsh_history" >/dev/null 2>&1; then
+            fail "CAN read ~/.zsh_history (should be blocked!)"
+        else
+            ok "Cannot read ~/.zsh_history"
+        fi
+
+        # Desktop
+        if sandbox_run /bin/ls "${HOME}/Desktop" >/dev/null 2>&1; then
+            fail "CAN read ~/Desktop (should be blocked!)"
+        else
+            ok "Cannot read ~/Desktop"
+        fi
+
+        # Documents
+        if sandbox_run /bin/ls "${HOME}/Documents" >/dev/null 2>&1; then
+            fail "CAN read ~/Documents (should be blocked!)"
+        else
+            ok "Cannot read ~/Documents"
+        fi
+
+        # Downloads
+        if sandbox_run /bin/ls "${HOME}/Downloads" >/dev/null 2>&1; then
+            fail "CAN read ~/Downloads (should be blocked!)"
+        else
+            ok "Cannot read ~/Downloads"
+        fi
+
+        # Write to Desktop
+        if sandbox_run /usr/bin/touch "${HOME}/Desktop/.sandbox-test-$$" 2>/dev/null; then
             rm -f "${HOME}/Desktop/.sandbox-test-$$"
-            echo -e "  ${RED}✗ FAIL${NC}  CAN write to ~/Desktop (sandbox not working!)"
+            fail "CAN write to ~/Desktop (should be blocked!)"
         else
-            ok "Cannot write to ~/Desktop (sandbox is working)"
+            ok "Cannot write to ~/Desktop"
         fi
 
+        # .env file
+        if sandbox_run /bin/cat "${HOME}/.env" >/dev/null 2>&1; then
+            fail "CAN read ~/.env (should be blocked!)"
+        else
+            ok "Cannot read ~/.env"
+        fi
+
+        # .npmrc
+        if sandbox_run /bin/cat "${HOME}/.npmrc" >/dev/null 2>&1; then
+            fail "CAN read ~/.npmrc (should be blocked!)"
+        else
+            ok "Cannot read ~/.npmrc"
+        fi
+
+        # Keychain
+        if sandbox_run /bin/ls "${HOME}/Library/Keychains" >/dev/null 2>&1; then
+            fail "CAN read ~/Library/Keychains (should be blocked!)"
+        else
+            ok "Cannot read ~/Library/Keychains"
+        fi
+
+        # AWS credentials
+        if sandbox_run /bin/cat "${HOME}/.aws/credentials" >/dev/null 2>&1; then
+            fail "CAN read ~/.aws/credentials (should be blocked!)"
+        else
+            ok "Cannot read ~/.aws/credentials"
+        fi
+
+        # ---- Summary ----
         echo ""
-        info "Done. If all tests passed, the sandbox profile is working correctly."
-        exit 0
+        echo "=============================================="
+        echo "  Test Summary"
+        echo "=============================================="
+        echo ""
+        echo -e "  ${GREEN}Passed: ${PASS}${NC}"
+        echo -e "  ${RED}Failed: ${FAIL}${NC}"
+        echo ""
+        if [[ $FAIL -eq 0 ]]; then
+            echo -e "  ${GREEN}All checks passed! Sandbox is correctly configured.${NC}"
+        else
+            echo -e "  ${RED}Some checks failed. Review the sandbox profile.${NC}"
+        fi
+        echo ""
+        echo "=============================================="
+        exit $FAIL
         ;;
     run|"")
         # Continue to launch
@@ -122,12 +226,11 @@ esac
 # ---- Launch Claude.app inside sandbox ---------------------------------------
 info "Launching Claude.app with sandbox restrictions..."
 info "Profile: ${SANDBOX_PROFILE}"
-info "R/W dirs: ${CC_RW_DIRECTORIES}"
-info "R/O dirs: ${CC_RO_DIRECTORIES}"
 echo ""
 
-warn "The sandbox restricts Claude.app's filesystem access."
-warn "If Claude.app behaves unexpectedly, check the sandbox profile."
+warn "Blocked paths: ~/.ssh, ~/Desktop, ~/Documents, ~/Downloads,"
+warn "  ~/Pictures, ~/Movies, ~/Music, ~/.zsh_history, ~/.env,"
+warn "  ~/.npmrc, ~/.netrc, ~/.aws, ~/.gnupg, ~/Library/Keychains"
 echo ""
 
 sandbox-exec -f "$SANDBOX_PROFILE" \
