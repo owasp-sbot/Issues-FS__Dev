@@ -34,3 +34,19 @@
 [submodule "roles/Issues-FS__Dev__Role__Architect"]
 	path = roles/Issues-FS__Dev__Role__Architect
 	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Architect
+[submodule "roles/Issues-FS__Dev__Role__Cartographer"]
+	path = roles/Issues-FS__Dev__Role__Cartographer
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Cartographer.git
+	branch = dev
+[submodule "roles/Issues-FS__Dev__Role__AppSec"]
+	path = roles/Issues-FS__Dev__Role__AppSec
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__AppSec
+	branch = dev
+[submodule "roles/Issues-FS__Dev__Role__Historian"]
+	path = roles/Issues-FS__Dev__Role__Historian
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Historian
+	branch = dev
+[submodule "roles/Issues-FS__Dev__Role__Journalist"]
+	path = roles/Issues-FS__Dev__Role__Journalist
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Journalist
+	branch = dev

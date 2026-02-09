@@ -1,13 +1,36 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "0"
+  },
   "permissions": {
     "allow": [
       "Bash(test:*)",
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(sed:*)",
+      "Bash(sort:*)",
+      "Bash(wc:*)",
+      "Bash(xargs:*)",
+      "Bash(for:*)",
+      "Bash(do:*)",
+      "Bash(done:*)",
       "Bash(git checkout:*)",
       "Bash(git pull:*)",
       "Bash(git add:*)",
-      "Bash(for d in *)",
+      "Bash(git stash:*)",
+      "Bash(git diff:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git -C:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(poetry:*)",
       "Bash($ISSUES_FS:*)",
-      "Bash(/Users/diniscruz/Library/Caches/pypoetry/virtualenvs/issues-fs-dev-1uzJze9o-py3.12/bin/issues-fs:*)"
+      "Bash(*/bin/issues-fs:*)",
+      "Bash(*/bin/pip:*)",
+      "Bash(*/bin/python:*)"
     ]
   }
 }
