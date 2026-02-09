@@ -58,3 +58,7 @@
 	path = roles/Issues-FS__Dev__Role__Journalist
 	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Journalist
 	branch = dev
+[submodule "roles/Issues-FS__Dev__Role__QA"]
+	path = roles/Issues-FS__Dev__Role__QA
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__QA.git
+	branch = dev
