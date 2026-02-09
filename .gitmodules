@@ -1,18 +1,23 @@
 [submodule "modules/Issues-FS"]
 	path = modules/Issues-FS
 	url = git@github.com:owasp-sbot/Issues-FS.git
+	branch = dev
 [submodule "modules/Issues-FS__Service__Client__Python"]
 	path = modules/Issues-FS__Service__Client__Python
 	url = git@github.com:owasp-sbot/Issues-FS__Service__Client__Python.git
+	branch = dev
 [submodule "modules/Issues-FS__Service"]
 	path = modules/Issues-FS__Service
 	url = git@github.com:owasp-sbot/Issues-FS__Service.git
+	branch = dev
 [submodule "modules/Issues-FS__Service__UI"]
 	path = modules/Issues-FS__Service__UI
 	url = git@github.com:owasp-sbot/Issues-FS__Service__UI.git
+	branch = dev
 [submodule "modules/Issues-FS__Docs"]
 	path = modules/Issues-FS__Docs
 	url = git@github.com:owasp-sbot/Issues-FS__Docs.git
+	branch = dev
 [submodule "modules/Issues-FS__CLI"]
 	path = modules/Issues-FS__CLI
 	url = git@github.com:owasp-sbot/Issues-FS__CLI.git
@@ -28,12 +33,15 @@
 [submodule "roles/Issues-FS__Dev__Role__Dev"]
 	path = roles/Issues-FS__Dev__Role__Dev
 	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Dev
+	branch = dev
 [submodule "roles/Issues-FS__Dev__Role__Conductor"]
 	path = roles/Issues-FS__Dev__Role__Conductor
 	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Conductor
+	branch = dev
 [submodule "roles/Issues-FS__Dev__Role__Architect"]
 	path = roles/Issues-FS__Dev__Role__Architect
 	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Architect
+	branch = dev
 [submodule "roles/Issues-FS__Dev__Role__Cartographer"]
 	path = roles/Issues-FS__Dev__Role__Cartographer
 	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Cartographer.git
