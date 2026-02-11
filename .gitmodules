@@ -66,3 +66,11 @@
 	path = humans/Issues-FS__Dev__Human__Dinis_Cruz
 	url = git@github.com:owasp-sbot/Issues-FS__Dev__Human__Dinis_Cruz.git
 	branch = dev
+[submodule "dev/Issues-FS__Dev__Utils"]
+	path = dev/Issues-FS__Dev__Utils
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Utils.git
+	branch = dev
+[submodule "roles/Issues-FS__Dev__Role__Designer"]
+	path = roles/Issues-FS__Dev__Role__Designer
+	url = git@github.com:owasp-sbot/Issues-FS__Dev__Role__Designer.git
+	branch = dev
