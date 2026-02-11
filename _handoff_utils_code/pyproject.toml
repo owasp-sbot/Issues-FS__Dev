@@ -1,0 +1,20 @@
+[tool.poetry]
+name        = "issues_fs_dev_utils"
+version     = "v0.1.0"
+description = "Issues-FS Dev Utils - Cross-repo developer productivity tools"
+authors     = ["Dinis Cruz <dinis.cruz@owasp.org>"]
+license     = "Apache 2.0"
+readme      = "README.md"
+homepage    = "https://github.com/owasp-sbot/Issues-FS__Dev__Utils"
+repository  = "https://github.com/owasp-sbot/Issues-FS__Dev__Utils"
+
+[tool.poetry.dependencies]
+python                   = "^3.12"
+
+[build-system]
+requires = ["poetry-core>=1.9.1"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+minversion    = "6.0"
+testpaths     = ["tests"]
