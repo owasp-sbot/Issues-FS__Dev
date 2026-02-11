@@ -1,0 +1,189 @@
+{
+  "_meta": {
+    "description"  : "Knowledge artifact map for the context-dump CLI. Maps topics to relevant documentation and code search patterns. Maintained by the Librarian role.",
+    "version"      : "v0.1.0",
+    "date"         : "2026-02-11",
+    "maintainer"   : "Librarian"
+  },
+
+  "always_include": {
+    "docs": [
+      "modules/Issues-FS__Docs/docs/to_classify/v0_4_0__issues-fs__thinking-in-graphs.md",
+      "modules/Issues-FS__Docs/docs/issues_fs/architecture/v0.4.0__issues-fs__architecture-overview.md"
+    ],
+    "note": "These two documents provide foundational context for any Issues-FS coding session."
+  },
+
+  "type_safety": {
+    "docs": [
+      "modules/Issues-FS__Docs/docs/development/llm-briefs/type-safety/v3.63.4__for_llms__type_safe.md",
+      "modules/Issues-FS__Docs/docs/development/llm-briefs/type-safety/v3.28.0__for_llms__osbot-utils-safe-primitives.md",
+      "modules/Issues-FS__Docs/docs/development/llm-briefs/type-safety/v0.4.0__for_llms__no_raw_primitives_policy.md",
+      "modules/Issues-FS__Docs/docs/development/llm-briefs/type-safety/v3.63.3__for_llms__type_safe__collections__subclassing_guide.md",
+      "modules/Issues-FS__Docs/docs/development/llm-briefs/type-safety/v3.63.3__for_llms__type_safe__decorator_guide.md",
+      "modules/Issues-FS__Docs/docs/development/llm-briefs/type-safety/v3.1.1__for_llms__type_safe__testing_guidance.md",
+      "modules/Issues-FS__Docs/docs/development/llm-briefs/v3.63.4__for_llms__python_formatting_guide.md"
+    ],
+    "code_patterns": ["Type_Safe", "Safe_Str", "Safe_UInt", "type_safe", "Safe_"],
+    "note": "Include these when the session involves writing or reviewing code."
+  },
+
+  "topics": {
+    "path": {
+      "description"    : "Path resolution, file paths, directory navigation",
+      "code_globs"     : ["**/Path__*.py", "**/path*.py", "**/*path*.py"],
+      "code_patterns"  : ["resolve_full_path", "path_handler", "Safe_Str__File__Path", "discover_issues_root", "root_path"],
+      "docs"           : [
+        "modules/Issues-FS__Docs/docs/issues_fs/architecture/v0.4.0__issues-fs__architecture-overview.md"
+      ],
+      "modules"        : ["modules/Issues-FS/", "modules/Issues-FS__CLI/"]
+    },
+
+    "graph": {
+      "description"    : "Graph data model, nodes, edges, MGraph-DB",
+      "code_globs"     : ["**/Graph__*.py", "**/Schema__Graph*.py", "**/MGraph*.py"],
+      "code_patterns"  : ["Graph__Repository", "Node_Id", "Edge_Id", "graph_services", "MGraph"],
+      "docs"           : [
+        "modules/Issues-FS__Docs/docs/to_classify/v0_4_0__issues-fs__thinking-in-graphs.md",
+        "modules/Issues-FS__Docs/docs/library/mgraph-db/v1_10_6__mGraph-db__llm_briefing.md"
+      ],
+      "modules"        : ["modules/Issues-FS/"]
+    },
+
+    "storage": {
+      "description"    : "Memory-FS abstraction, storage backends",
+      "code_globs"     : ["**/Memory_FS*.py", "**/Storage*.py", "**/storage*.py"],
+      "code_patterns"  : ["Memory_FS", "storage_fs", "file__exists", "file__save", "create_local_disk"],
+      "docs"           : [
+        "modules/Issues-FS__Docs/docs/issues_fs/architecture/0.41.0__issues-fs__memory-fs-abstraction-layer.md"
+      ],
+      "modules"        : ["modules/Issues-FS/"]
+    },
+
+    "cli": {
+      "description"    : "Command-line interface, Typer commands",
+      "code_globs"     : ["**/cli__*.py", "**/CLI__*.py"],
+      "code_patterns"  : ["typer", "CLI__Context", "CLI__Output", "cli__main"],
+      "docs"           : [],
+      "modules"        : ["modules/Issues-FS__CLI/"]
+    },
+
+    "service": {
+      "description"    : "FastAPI REST API server",
+      "code_globs"     : ["**/*Service*.py", "**/api/*.py", "**/routes/*.py"],
+      "code_patterns"  : ["FastAPI", "router", "endpoint", "Service__"],
+      "docs"           : [
+        "modules/Issues-FS__Docs/docs/issues_fs/llm-briefs/v0.2.25__llm-brief__issues-ui__backend-development-workflow.md"
+      ],
+      "modules"        : ["modules/Issues-FS__Service/", "modules/Issues-FS__Service__Client__Python/"]
+    },
+
+    "ui": {
+      "description"    : "Web UI, frontend components",
+      "code_globs"     : ["**/*.tsx", "**/*.ts", "**/*.jsx", "**/*.css"],
+      "code_patterns"  : ["component", "render", "fetch", "useState"],
+      "docs"           : [
+        "modules/Issues-FS__Docs/docs/issues_fs/llm-briefs/v0.2.25__llm-brief__issues-ui__frontend-development-workflow.md"
+      ],
+      "modules"        : ["modules/Issues-FS__Service__UI/"]
+    },
+
+    "schema": {
+      "description"    : "Data schemas, Type_Safe models, request/response objects",
+      "code_globs"     : ["**/Schema__*.py", "**/schemas/**/*.py"],
+      "code_patterns"  : ["Schema__", "Safe_Str__", "Node_Id", "Edge_Id", "Timestamp_Now"],
+      "docs"           : [
+        "modules/Issues-FS__Docs/docs/development/llm-briefs/type-safety/v3.63.4__for_llms__type_safe.md",
+        "modules/Issues-FS__Docs/docs/development/llm-briefs/type-safety/v3.28.0__for_llms__osbot-utils-safe-primitives.md"
+      ],
+      "modules"        : ["modules/Issues-FS/", "modules/Issues-FS__Service__Client__Python/"]
+    },
+
+    "node": {
+      "description"    : "Issue nodes, node types, node CRUD",
+      "code_globs"     : ["**/Node__*.py", "**/node*.py"],
+      "code_patterns"  : ["Node__Service", "create_node", "node_type", "Safe_Str__Node_Type", "Safe_Str__Node_Label"],
+      "docs"           : [],
+      "modules"        : ["modules/Issues-FS/", "modules/Issues-FS__CLI/"]
+    },
+
+    "link": {
+      "description"    : "Links/edges between nodes, relationships",
+      "code_globs"     : ["**/Link__*.py", "**/link*.py"],
+      "code_patterns"  : ["Link__Service", "Safe_Str__Link_Verb", "link_type", "bidirectional"],
+      "docs"           : [
+        "modules/Issues-FS__Docs/docs/to_classify/v0_4_0__issues-fs__thinking-in-graphs.md"
+      ],
+      "modules"        : ["modules/Issues-FS/", "modules/Issues-FS__CLI/"]
+    },
+
+    "lexicon": {
+      "description"    : "Lexicon architecture, semantic vocabulary, anchor nodes",
+      "code_globs"     : ["**/Lexicon*.py", "**/lexicon*.py"],
+      "code_patterns"  : ["lexicon", "anchor", "same_as", "equivalent_to"],
+      "docs"           : [
+        "modules/Issues-FS__Docs/docs/to_classify/v0_4_0__issues-fs__lexicon-architecture-v2.md",
+        "modules/Issues-FS__Docs/docs/to_classify/v0_4_0__issues-fs__compatibility-through-connectivity.md"
+      ],
+      "modules"        : ["modules/Issues-FS/"]
+    },
+
+    "roles": {
+      "description"    : "Role-based agent coordination, all 10 roles",
+      "code_globs"     : [],
+      "code_patterns"  : ["Conductor", "Architect", "Librarian", "Cartographer", "Journalist", "Historian"],
+      "docs"           : [
+        "modules/Issues-FS__Docs/docs/to_classify/v0.1.0__issues-fs__role-based-agent-coordination.md",
+        "modules/Issues-FS__Docs/docs/development/guide__agentic-role-based-workflow.md",
+        "modules/Issues-FS__Docs/docs/to_classify/9-feb/v0_4_0__issues-fs__role-ecosystem-guide.md"
+      ],
+      "role_files"     : [
+        "roles/Issues-FS__Dev__Role__Conductor/ROLE.md",
+        "roles/Issues-FS__Dev__Role__Architect/ROLE.md",
+        "roles/Issues-FS__Dev__Role__Dev/ROLE.md",
+        "roles/Issues-FS__Dev__Role__QA/ROLE.md",
+        "roles/Issues-FS__Dev__Role__DevOps/ROLE.md",
+        "roles/Issues-FS__Dev__Role__Librarian/ROLE.md",
+        "roles/Issues-FS__Dev__Role__Cartographer/ROLE.md",
+        "roles/Issues-FS__Dev__Role__AppSec/ROLE.md",
+        "roles/Issues-FS__Dev__Role__Historian/ROLE.md",
+        "roles/Issues-FS__Dev__Role__Journalist/ROLE.md"
+      ],
+      "modules"        : []
+    },
+
+    "testing": {
+      "description"    : "Testing patterns, pytest, test structure",
+      "code_globs"     : ["**/test_*.py"],
+      "code_patterns"  : ["TestCase", "setUpClass", "setUp", "test__", "pytest"],
+      "docs"           : [
+        "modules/Issues-FS__Docs/docs/development/llm-briefs/type-safety/v3.1.1__for_llms__type_safe__testing_guidance.md",
+        "modules/Issues-FS__Docs/docs/to_classify/v0_4_0__issues-fs__architecture-testing-worked-example.md"
+      ],
+      "modules"        : ["modules/Issues-FS/", "modules/Issues-FS__CLI/"]
+    },
+
+    "comment": {
+      "description"    : "Comments on issues/nodes",
+      "code_globs"     : ["**/Comment*.py", "**/comment*.py"],
+      "code_patterns"  : ["Comments__Service", "add_comment", "list_comments"],
+      "docs"           : [],
+      "modules"        : ["modules/Issues-FS/", "modules/Issues-FS__CLI/"]
+    },
+
+    "onboarding": {
+      "description"    : "New developer onboarding, project overview",
+      "code_globs"     : [],
+      "code_patterns"  : [],
+      "docs"           : [
+        ".claude/CLAUDE.md",
+        "modules/Issues-FS__Docs/docs/to_classify/v0_4_0__issues-fs__thinking-in-graphs.md",
+        "modules/Issues-FS__Docs/docs/issues_fs/architecture/v0.4.0__issues-fs__architecture-overview.md",
+        "modules/Issues-FS__Docs/docs/development/guide__agentic-role-based-workflow.md",
+        "modules/Issues-FS__Docs/docs/issues_fs/llm-briefs/v0.2.14__briefing__graph-based-issue-tracking.md",
+        "modules/Issues-FS__Docs/docs/to_classify/v0.1.0__issues-fs__role-based-agent-coordination.md"
+      ],
+      "modules"        : []
+    }
+  }
+}
