@@ -1,6 +1,6 @@
 [tool.poetry]
 name        = "issues_fs_dev"
-version     = "v0.2.0"
+version     = "v0.2.18"
 description = "Issues-FS Dev - Development workspace and integration tests"
 authors     = ["Dinis Cruz <dinis.cruz@owasp.org>"]
 license     = "Apache 2.0"
@@ -11,7 +11,7 @@ repository  = "https://github.com/owasp-sbot/Issues-FS__Dev"
 [tool.poetry.dependencies]
 python                   = "^3.12"
 osbot-utils              = "*"
-#issues-fs                = "*"
+issues-fs-cli            = "*"
 #issues-fs-service        = "*"
 #issues-fs-service-client-python = "*"
 

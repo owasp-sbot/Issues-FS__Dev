@@ -1,4 +1,6 @@
 osbot-utils
+osbot_fast_api_serverless
+memory-fs
 #issues-fs
 #issues-fs-service
 #issues-fs-service-client-python
@@ -6,3 +8,4 @@ osbot-utils
 # for testing
 pytest
 pytest-cov
+httpx

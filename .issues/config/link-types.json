@@ -1,0 +1,93 @@
+{
+  "link_types": [
+    {
+      "link_type_id": "1a8c7ea0",
+      "verb": "blocks",
+      "inverse_verb": "blocked-by",
+      "description": "Prevents progress on target",
+      "source_types": [
+        "bug",
+        "task"
+      ],
+      "target_types": [
+        "task",
+        "feature"
+      ]
+    },
+    {
+      "link_type_id": "4f96b9d0",
+      "verb": "has-task",
+      "inverse_verb": "task-of",
+      "description": "Contains as sub-work",
+      "source_types": [
+        "feature",
+        "git-repo"
+      ],
+      "target_types": [
+        "task"
+      ]
+    },
+    {
+      "link_type_id": "73793b31",
+      "verb": "assigned-to",
+      "inverse_verb": "assignee-of",
+      "description": "Work assigned to person_agent",
+      "source_types": [
+        "bug",
+        "task",
+        "feature"
+      ],
+      "target_types": [
+        "person"
+      ]
+    },
+    {
+      "link_type_id": "3c8cc7d1",
+      "verb": "depends-on",
+      "inverse_verb": "dependency-of",
+      "description": "Requires target to complete first",
+      "source_types": [
+        "task",
+        "feature"
+      ],
+      "target_types": [
+        "task",
+        "feature"
+      ]
+    },
+    {
+      "link_type_id": "dbfdd074",
+      "verb": "relates-to",
+      "inverse_verb": "relates-to",
+      "description": "General association (symmetric)",
+      "source_types": [
+        "bug",
+        "task",
+        "feature",
+        "git-repo"
+      ],
+      "target_types": [
+        "bug",
+        "task",
+        "feature",
+        "git-repo"
+      ]
+    },
+    {
+      "link_type_id": "655ce761",
+      "verb": "contains",
+      "inverse_verb": "contained-by",
+      "description": "Parent contains child issue",
+      "source_types": [
+        "git-repo",
+        "feature",
+        "task"
+      ],
+      "target_types": [
+        "bug",
+        "task",
+        "feature"
+      ]
+    }
+  ]
+}
