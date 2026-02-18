@@ -126,6 +126,16 @@ Once setup is confirmed, provide the following to orient the session:
 
 ## Working With Submodules
 
+### Important: Never Update Submodule Pointers in This Repo
+
+**Do NOT commit submodule pointer changes to `Issues-FS__Dev`.** The parent repo's submodule pointers (the commit hashes recorded in the git index for each submodule path) are managed by the human lead and updated during coordinated releases.
+
+When you work on submodules:
+- **DO** create branches and push commits directly to the submodule's own repo
+- **DO NOT** stage or commit the resulting submodule pointer change in this parent repo (i.e. never `git add modules/Issues-FS` or `git add roles/...` in the parent)
+
+If `git status` in the parent repo shows modified submodule paths, that is expected -- just leave them unstaged.
+
 ### Pushing Changes to Submodule Repos
 
 The `GH_SUBMODULE_TOKEN` grants write access. From within a submodule:
